@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 
 var path = require('path'),
-    fs = require('../lib/less-node/fs'),
+    fs = require('graceful-fs'),
     os = require("os"),
-    errno,
-    mkdirp;
-
-try {
-    errno = require('errno');
-} catch (err) {
-    errno = null;
-}
+    errno = require('errno'),
+    mkdirp = require('mkdirp');
 
 var less = require('../lib/less-node'),
     pluginLoader = new less.PluginLoader(less),
@@ -330,17 +324,7 @@ function printUsage() {
     }
 
     var ensureDirectory = function (filepath) {
-        var dir = path.dirname(filepath),
-            cmd,
-            existsSync = fs.existsSync || path.existsSync;
-        if (!existsSync(dir)) {
-            if (mkdirp === undefined) {
-                try {mkdirp = require('mkdirp');}
-                catch(e) { mkdirp = null; }
-            }
-            cmd = mkdirp && mkdirp.sync || fs.mkdirSync;
-            cmd(dir);
-        }
+        mkdirp.sync(path.dirname(filepath));
     };
 
     if (options.depends) {
@@ -359,7 +343,7 @@ function printUsage() {
             fs.writeFile(filename, output, 'utf8', function (err) {
                 if (err) {
                     var description = "Error: ";
-                    if (errno && errno.errno[err.errno]) {
+                    if (errno.errno[err.errno]) {
                         description += errno.errno[err.errno].description;
                     } else {
                         description += err.code + " " + err.message;
@@ -388,7 +372,7 @@ function printUsage() {
             fs.writeFile(output, result.css, {encoding: 'utf8'}, function (err) {
                 if (err) {
                     var description = "Error: ";
-                    if (errno && errno.errno[err.errno]) {
+                    if (errno.errno[err.errno]) {
                         description += errno.errno[err.errno].description;
                     } else {
                         description += err.code + " " + err.message;
